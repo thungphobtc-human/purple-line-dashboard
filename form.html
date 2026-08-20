@@ -184,6 +184,29 @@
 <script>
 // ==== ใส่ URL ของ Apps Script Web App ที่ Deploy แล้วตรงนี้ (ต้องเหมือนกับใน Dashboard.html) ====
 const API_URL = 'https://script.google.com/macros/s/AKfycbx9KzquWeNCDiDmaFIvhv3rNWCMCIh4WxfQi7hObbBRYaNfrlyBxdoM4RqLrW_6CYFm/exec';
+
+// เรียก API ผ่านเทคนิค JSONP (โหลด <script> tag) เพื่อเลี่ยงปัญหา CORS ของ Apps Script
+function jsonpRequest(params){
+  return new Promise((resolve, reject) => {
+    const callbackName = 'cb_' + Date.now() + '_' + Math.floor(Math.random()*100000);
+    const script = document.createElement('script');
+    const timeout = setTimeout(() => { cleanup(); reject(new Error('หมดเวลาเชื่อมต่อ API (timeout)')); }, 15000);
+
+    function cleanup(){
+      clearTimeout(timeout);
+      delete window[callbackName];
+      script.remove();
+    }
+
+    window[callbackName] = (data) => { cleanup(); resolve(data); };
+
+    const query = new URLSearchParams({...params, callback: callbackName}).toString();
+    script.src = API_URL + '?' + query;
+    script.onerror = () => { cleanup(); reject(new Error('เชื่อมต่อ API ไม่สำเร็จ')); };
+    document.body.appendChild(script);
+  });
+}
+
 let milestoneCount = 0;
 const DEFAULT_PROJECT_NAME = 'โครงการรถไฟฟ้าสายสีม่วง ช่วงเตาปูน – ราษฎร์บูรณะ (วงแหวนกาญจนาภิเษก)';
 const INSURANCE_TYPES = ['CAR/TPL', 'CPE', 'PII', 'WCI'];
@@ -325,9 +348,7 @@ function collectFormData(){
 
 async function loadContractIntoForm(){
   try{
-    const res = await fetch(API_URL + '?action=get&contract=' + encodeURIComponent(contractSelect.value));
-    if(!res.ok) throw new Error('เรียก API ไม่สำเร็จ (HTTP ' + res.status + ')');
-    const data = await res.json();
+    const data = await jsonpRequest({ contract: contractSelect.value });
     if(data){
       fillForm(data);
       saveMsg.textContent = 'โหลดข้อมูลเดิมของ ' + contractSelect.value + ' แล้ว';
@@ -351,12 +372,7 @@ document.getElementById('addMilestoneBtn').addEventListener('click', () => addMi
 dataForm.addEventListener('submit', async (e) => {
   e.preventDefault();
   try{
-    const res = await fetch(API_URL, {
-      method: 'POST',
-      headers: {'Content-Type': 'text/plain;charset=utf-8'}, // ใช้ text/plain เพื่อเลี่ยงปัญหา CORS preflight ของ Apps Script
-      body: JSON.stringify(collectFormData())
-    });
-    const result = await res.json();
+    const result = await jsonpRequest({ action: 'save', data: JSON.stringify(collectFormData()) });
     if(result.status !== 'ok') throw new Error(result.message || 'ไม่ทราบสาเหตุ');
     saveMsg.textContent = 'บันทึก ' + contractSelect.value + ' สำเร็จเมื่อ ' + new Date().toLocaleTimeString('th-TH');
     saveMsg.style.color = 'var(--accent-green)';
