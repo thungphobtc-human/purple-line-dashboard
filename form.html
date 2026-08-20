@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>กรอกข้อมูลความคืบหน้าโครงการ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans+Thai:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #2B0F3F;
+    --bg-panel: #3A1554;
+    --bg-panel-2: #4A1D68;
+    --grid-line: #5D2C82;
+    --text-primary: #F3E9FB;
+    --text-muted: #B497C9;
+    --accent-cyan: #C77DFF;
+    --accent-amber: #F2A93B;
+    --accent-red: #E85D5D;
+    --accent-green: #4CD787;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:
+      linear-gradient(var(--grid-line) 1px, transparent 1px) 0 0/40px 40px,
+      linear-gradient(90deg, var(--grid-line) 1px, transparent 1px) 0 0/40px 40px,
+      var(--bg);
+    color:var(--text-primary);
+    font-family:'IBM Plex Sans Thai', sans-serif;
+    min-height:100vh;
+    padding:24px;
+  }
+  header{
+    display:flex; justify-content:space-between; align-items:flex-end;
+    max-width:820px; margin:0 auto 28px; padding-bottom:16px;
+    border-bottom:1px solid var(--grid-line);
+    flex-wrap:wrap; gap:12px;
+  }
+  .eyebrow{font-family:'IBM Plex Mono', monospace; font-size:12px; letter-spacing:.12em; color:var(--accent-cyan); text-transform:uppercase;}
+  h1{font-family:'Space Grotesk', sans-serif; font-size:26px; margin:4px 0 2px; font-weight:700;}
+  .subtitle{color:var(--text-muted); font-size:14px;}
+  .status-dot{display:inline-flex; align-items:center; gap:6px; font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--text-muted);}
+  .status-dot span.dot{width:7px; height:7px; border-radius:50%; background:var(--text-muted);}
+  .status-dot.ok span.dot{background:var(--accent-green);}
+  .status-dot.err span.dot{background:var(--accent-red);}
+
+  main{max-width:820px; margin:0 auto;}
+  .panel{background:var(--bg-panel); border:1px solid var(--grid-line); border-radius:10px; padding:22px; margin-bottom:20px;}
+  .panel-label{font-family:'IBM Plex Mono', monospace; font-size:11px; letter-spacing:.1em; color:var(--text-muted); text-transform:uppercase; margin-bottom:16px; display:block;}
+
+  .field-row{display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:14px;}
+  .field-row.single{grid-template-columns:1fr;}
+  @media (max-width:600px){.field-row{grid-template-columns:1fr;}}
+  label{font-size:13px; color:var(--text-muted); display:block; margin-bottom:6px;}
+  input, select{
+    width:100%; padding:10px 12px; background:var(--bg-panel-2); border:1px solid var(--grid-line);
+    border-radius:6px; color:var(--text-primary); font-family:'IBM Plex Sans Thai', sans-serif; font-size:14px;
+  }
+  input:focus, select:focus{outline:2px solid var(--accent-cyan); outline-offset:1px; border-color:var(--accent-cyan);}
+  input[type="number"], .money-input{font-family:'IBM Plex Mono', monospace;}
+
+  .milestone-row{display:grid; grid-template-columns:1fr 160px 36px; gap:10px; margin-bottom:10px; align-items:end;}
+  .icon-btn{
+    background:var(--bg-panel-2); border:1px solid var(--grid-line); color:var(--accent-red);
+    border-radius:6px; height:38px; cursor:pointer; font-size:16px; line-height:1;
+  }
+  .icon-btn:hover{border-color:var(--accent-red);}
+
+  button.primary{
+    background:var(--accent-cyan); color:var(--bg); border:none; font-weight:600;
+    padding:12px 20px; border-radius:6px; cursor:pointer; font-size:14px; font-family:'IBM Plex Sans Thai', sans-serif;
+  }
+  button.primary:hover{opacity:.9;}
+  button.secondary{
+    background:var(--bg-panel-2); color:var(--text-primary); border:1px solid var(--grid-line);
+    padding:10px 16px; border-radius:6px; cursor:pointer; font-size:13px; font-family:'IBM Plex Sans Thai', sans-serif;
+  }
+  button.secondary:hover{border-color:var(--accent-cyan); color:var(--accent-cyan);}
+  button:focus-visible{outline:2px solid var(--accent-cyan); outline-offset:2px;}
+
+  .add-milestone{font-size:13px; color:var(--accent-cyan); background:none; border:1px dashed var(--grid-line); width:100%; padding:9px; border-radius:6px; cursor:pointer;}
+  .add-milestone:hover{border-color:var(--accent-cyan);}
+
+  .save-bar{
+    position:sticky; bottom:16px; background:var(--bg-panel); border:1px solid var(--grid-line);
+    border-radius:10px; padding:14px 18px; display:flex; justify-content:space-between; align-items:center;
+    flex-wrap:wrap; gap:10px; margin-top:4px;
+  }
+  .save-msg{font-size:13px; color:var(--text-muted);}
+  .connect-screen{text-align:center; padding:50px 20px;}
+  .connect-screen p{color:var(--text-muted); font-size:14px; max-width:460px; margin:8px auto 20px; line-height:1.6;}
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <div class="eyebrow">DATA ENTRY</div>
+    <h1>กรอกข้อมูลความคืบหน้าโครงการ</h1>
+    <div class="subtitle">ข้อมูลแต่ละสัญญาจะถูกบันทึกลงฐานข้อมูลกลาง (Google Sheets) โดยอัตโนมัติ</div>
+  </div>
+  <span class="status-dot" id="statusDot"><span class="dot"></span><span id="statusText">ยังไม่ได้เชื่อมโฟลเดอร์</span></span>
+</header>
+
+<main>
+  <form id="dataForm">
+    <div class="panel">
+      <span class="panel-label">ข้อมูลโครงการ</span>
+      <div class="field-row">
+        <div><label>ชื่อโครงการ</label><input type="text" id="projectName" value="โครงการรถไฟฟ้าสายสีม่วง ช่วงเตาปูน – ราษฎร์บูรณะ (วงแหวนกาญจนาภิเษก)"></div>
+        <div><label>สัญญา</label>
+          <select id="contractName">
+            <option>สัญญาที่ 1</option>
+            <option>สัญญาที่ 2</option>
+            <option>สัญญาที่ 3</option>
+            <option>สัญญาที่ 4</option>
+            <option>สัญญาที่ 5</option>
+            <option>สัญญาที่ 6</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <span class="panel-label">ความคืบหน้างาน</span>
+      <div class="field-row">
+        <div><label>Plan (%)</label><input type="number" step="0.01" id="plan"></div>
+        <div><label>Actual (%)</label><input type="number" step="0.01" id="actual"></div>
+      </div>
+      <div class="field-row single">
+        <div><label>IPS</label><input type="number" step="0.01" id="ips"></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <span class="panel-label">วงเงินโครงการ / การเบิกจ่าย</span>
+      <div class="field-row">
+        <div><label>วงเงินโครงการ (บาท)</label><input type="text" inputmode="decimal" class="money-input" id="contractValue"></div>
+        <div><label>เบิกจ่ายแล้ว (บาท)</label><input type="text" inputmode="decimal" class="money-input" id="disbursed"></div>
+      </div>
+      <div class="field-row">
+        <div><label>Cost Center Value (บาท, ไม่รวม VAT)</label><input type="text" inputmode="decimal" class="money-input" id="costCenterValue"></div>
+        <div><label>เลขที่งวดงานที่เบิกจ่ายล่าสุด</label><input type="number" step="1" id="latestPeriodNo"></div>
+      </div>
+      <div class="field-row">
+        <div><label>งวดงานล่าสุดที่เบิกจ่าย (บาท)</label><input type="text" inputmode="decimal" class="money-input" id="latestPeriod"></div>
+        <div><label>วันที่เบิกจ่ายล่าสุด</label><input type="date" id="latestDate"></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <span class="panel-label">กรมธรรม์ประกันภัย</span>
+      <div class="field-row">
+        <div><label>CAR/TPL — เลขที่กรมธรรม์</label><input type="text" id="ins_CARTPL_num"></div>
+        <div><label>CAR/TPL — วันหมดอายุ</label><input type="date" id="ins_CARTPL_exp"></div>
+      </div>
+      <div class="field-row">
+        <div><label>CPE — เลขที่กรมธรรม์</label><input type="text" id="ins_CPE_num"></div>
+        <div><label>CPE — วันหมดอายุ</label><input type="date" id="ins_CPE_exp"></div>
+      </div>
+      <div class="field-row">
+        <div><label>PII — เลขที่กรมธรรม์</label><input type="text" id="ins_PII_num"></div>
+        <div><label>PII — วันหมดอายุ</label><input type="date" id="ins_PII_exp"></div>
+      </div>
+      <div class="field-row">
+        <div><label>WCI — เลขที่กรมธรรม์</label><input type="text" id="ins_WCI_num"></div>
+        <div><label>WCI — วันหมดอายุ</label><input type="date" id="ins_WCI_exp"></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <span class="panel-label">Milestone</span>
+      <div id="milestoneContainer"></div>
+      <button type="button" class="add-milestone" id="addMilestoneBtn">+ เพิ่ม Milestone</button>
+    </div>
+
+    <div class="save-bar">
+      <span class="save-msg" id="saveMsg">ยังไม่มีการบันทึก</span>
+      <button type="submit" class="primary">บันทึกข้อมูล</button>
+    </div>
+  </form>
+</main>
+
+<script>
+// ==== ใส่ URL ของ Apps Script Web App ที่ Deploy แล้วตรงนี้ (ต้องเหมือนกับใน Dashboard.html) ====
+const API_URL = 'https://script.google.com/macros/s/AKfycbwxQstih82u4rcNsjb4v8rvW0eEJXZB15UlWbYWQ9w8HBn3-fipdhVJLOd4P0JCSMPK/exec';
+let milestoneCount = 0;
+const DEFAULT_PROJECT_NAME = 'โครงการรถไฟฟ้าสายสีม่วง ช่วงเตาปูน – ราษฎร์บูรณะ (วงแหวนกาญจนาภิเษก)';
+const INSURANCE_TYPES = ['CAR/TPL', 'CPE', 'PII', 'WCI'];
+const INSURANCE_IDS = {'CAR/TPL':'CARTPL', 'CPE':'CPE', 'PII':'PII', 'WCI':'WCI'};
+
+const statusDot = document.getElementById('statusDot');
+const statusText = document.getElementById('statusText');
+const dataForm = document.getElementById('dataForm');
+const milestoneContainer = document.getElementById('milestoneContainer');
+const saveMsg = document.getElementById('saveMsg');
+const contractSelect = document.getElementById('contractName');
+
+function setStatus(ok, text){
+  statusDot.className = 'status-dot ' + (ok ? 'ok' : 'err');
+  statusText.textContent = text;
+}
+function formatMoney(n){
+  if(n === undefined || n === null || n === '' || isNaN(n)) return '';
+  return Number(n).toLocaleString('en-US', {maximumFractionDigits:2});
+}
+function parseMoney(str){
+  if(!str) return 0;
+  const raw = String(str).replace(/,/g,'').trim();
+  const n = parseFloat(raw);
+  return isNaN(n) ? 0 : n;
+}
+function attachMoneyFormatting(input){
+  input.addEventListener('focus', () => { input.value = input.value.replace(/,/g,''); });
+  input.addEventListener('blur', () => { input.value = formatMoney(parseMoney(input.value)); });
+}
+document.querySelectorAll('.money-input').forEach(attachMoneyFormatting);
+
+function addMilestoneRow(name = '', date = ''){
+  milestoneCount++;
+  const id = 'm' + milestoneCount;
+  const row = document.createElement('div');
+  row.className = 'milestone-row';
+  row.dataset.id = id;
+  row.innerHTML = `
+    <div><label>ชื่อ Milestone</label><input type="text" class="m-name" value="${name}"></div>
+    <div><label>วันกำหนด</label><input type="date" class="m-date" value="${date}"></div>
+    <div><label>&nbsp;</label><button type="button" class="icon-btn" title="ลบ">×</button></div>
+  `;
+  row.querySelector('.icon-btn').addEventListener('click', () => row.remove());
+  milestoneContainer.appendChild(row);
+}
+
+function fillForm(data){
+  const meta = data.meta || {};
+  document.getElementById('projectName').value = meta.projectName || DEFAULT_PROJECT_NAME;
+
+  const p = data.progress || {};
+  document.getElementById('plan').value = p.plan ?? '';
+  document.getElementById('actual').value = p.actual ?? '';
+  document.getElementById('ips').value = p.ips ?? '';
+
+  const b = data.budget || {};
+  document.getElementById('contractValue').value = formatMoney(b.contractValue);
+  document.getElementById('disbursed').value = formatMoney(b.disbursed);
+  document.getElementById('costCenterValue').value = formatMoney(b.costCenterValue);
+  document.getElementById('latestPeriodNo').value = b.latestPeriodNo ?? '';
+  document.getElementById('latestPeriod').value = formatMoney(b.latestPeriod);
+  document.getElementById('latestDate').value = b.latestDate || '';
+
+  const ins = data.insurance || {};
+  INSURANCE_TYPES.forEach(type => {
+    const rec = ins[type] || {};
+    const idPart = INSURANCE_IDS[type];
+    document.getElementById('ins_' + idPart + '_num').value = rec.policyNumber || '';
+    document.getElementById('ins_' + idPart + '_exp').value = rec.expiryDate || '';
+  });
+
+  milestoneContainer.innerHTML = '';
+  const milestones = data.milestones || [];
+  if(milestones.length === 0){ addMilestoneRow(); }
+  else { milestones.forEach(m => addMilestoneRow(m.name || '', m.date || '')); }
+}
+
+function resetFormBlank(){
+  document.getElementById('projectName').value = DEFAULT_PROJECT_NAME;
+  document.getElementById('plan').value = '';
+  document.getElementById('actual').value = '';
+  document.getElementById('ips').value = '';
+  document.getElementById('contractValue').value = '';
+  document.getElementById('disbursed').value = '';
+  document.getElementById('costCenterValue').value = '';
+  document.getElementById('latestPeriodNo').value = '';
+  document.getElementById('latestPeriod').value = '';
+  document.getElementById('latestDate').value = '';
+  INSURANCE_TYPES.forEach(type => {
+    const idPart = INSURANCE_IDS[type];
+    document.getElementById('ins_' + idPart + '_num').value = '';
+    document.getElementById('ins_' + idPart + '_exp').value = '';
+  });
+  milestoneContainer.innerHTML = '';
+  addMilestoneRow();
+}
+
+function collectFormData(){
+  const milestones = [];
+  milestoneContainer.querySelectorAll('.milestone-row').forEach(row => {
+    const name = row.querySelector('.m-name').value.trim();
+    const date = row.querySelector('.m-date').value;
+    if(name || date) milestones.push({name, date});
+  });
+  return {
+    meta: {
+      projectName: document.getElementById('projectName').value.trim(),
+      contractName: contractSelect.value,
+      updatedAt: new Date().toISOString()
+    },
+    progress: {
+      plan: parseFloat(document.getElementById('plan').value) || 0,
+      actual: parseFloat(document.getElementById('actual').value) || 0,
+      ips: parseFloat(document.getElementById('ips').value) || 0
+    },
+    budget: {
+      contractValue: parseMoney(document.getElementById('contractValue').value),
+      disbursed: parseMoney(document.getElementById('disbursed').value),
+      costCenterValue: parseMoney(document.getElementById('costCenterValue').value),
+      latestPeriodNo: parseFloat(document.getElementById('latestPeriodNo').value) || 0,
+      latestPeriod: parseMoney(document.getElementById('latestPeriod').value),
+      latestDate: document.getElementById('latestDate').value
+    },
+    insurance: (() => {
+      const obj = {};
+      INSURANCE_TYPES.forEach(type => {
+        const idPart = INSURANCE_IDS[type];
+        obj[type] = {
+          policyNumber: document.getElementById('ins_' + idPart + '_num').value.trim(),
+          expiryDate: document.getElementById('ins_' + idPart + '_exp').value
+        };
+      });
+      return obj;
+    })(),
+    milestones
+  };
+}
+
+async function loadContractIntoForm(){
+  try{
+    const res = await fetch(API_URL + '?action=get&contract=' + encodeURIComponent(contractSelect.value));
+    if(!res.ok) throw new Error('เรียก API ไม่สำเร็จ (HTTP ' + res.status + ')');
+    const data = await res.json();
+    if(data){
+      fillForm(data);
+      saveMsg.textContent = 'โหลดข้อมูลเดิมของ ' + contractSelect.value + ' แล้ว';
+      saveMsg.style.color = 'var(--text-muted)';
+    } else {
+      resetFormBlank();
+      saveMsg.textContent = contractSelect.value + ' ยังไม่มีข้อมูล (จะสร้างข้อมูลใหม่เมื่อบันทึก)';
+      saveMsg.style.color = 'var(--text-muted)';
+    }
+    setStatus(true, 'เชื่อมต่อฐานข้อมูลกลางแล้ว');
+  }catch(e){
+    saveMsg.textContent = 'โหลดข้อมูลของสัญญานี้ไม่สำเร็จ: ' + e.message;
+    saveMsg.style.color = 'var(--accent-red)';
+    setStatus(false, 'เชื่อมต่อฐานข้อมูลไม่สำเร็จ');
+  }
+}
+
+contractSelect.addEventListener('change', loadContractIntoForm);
+document.getElementById('addMilestoneBtn').addEventListener('click', () => addMilestoneRow());
+
+dataForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  try{
+    const res = await fetch(API_URL, {
+      method: 'POST',
+      headers: {'Content-Type': 'text/plain;charset=utf-8'}, // ใช้ text/plain เพื่อเลี่ยงปัญหา CORS preflight ของ Apps Script
+      body: JSON.stringify(collectFormData())
+    });
+    const result = await res.json();
+    if(result.status !== 'ok') throw new Error(result.message || 'ไม่ทราบสาเหตุ');
+    saveMsg.textContent = 'บันทึก ' + contractSelect.value + ' สำเร็จเมื่อ ' + new Date().toLocaleTimeString('th-TH');
+    saveMsg.style.color = 'var(--accent-green)';
+  }catch(err){
+    saveMsg.textContent = 'บันทึกไม่สำเร็จ: ' + err.message;
+    saveMsg.style.color = 'var(--accent-red)';
+  }
+});
+
+loadContractIntoForm();
+</script>
+</body>
+</html>

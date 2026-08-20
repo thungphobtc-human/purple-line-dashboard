@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard ความคืบหน้าโครงการก่อสร้าง</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans+Thai:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #2B0F3F;
+    --bg-panel: #3A1554;
+    --bg-panel-2: #4A1D68;
+    --grid-line: #5D2C82;
+    --text-primary: #F3E9FB;
+    --text-muted: #B497C9;
+    --accent-cyan: #C77DFF;
+    --accent-amber: #F2A93B;
+    --accent-red: #E85D5D;
+    --accent-green: #4CD787;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:
+      linear-gradient(var(--grid-line) 1px, transparent 1px) 0 0/40px 40px,
+      linear-gradient(90deg, var(--grid-line) 1px, transparent 1px) 0 0/40px 40px,
+      var(--bg);
+    color:var(--text-primary);
+    font-family:'IBM Plex Sans Thai', sans-serif;
+    min-height:100vh;
+    padding:24px;
+  }
+  .corner{position:fixed; width:22px; height:22px; opacity:.5; pointer-events:none;}
+  .corner::before, .corner::after{content:''; position:absolute; background:var(--accent-cyan);}
+  .corner::before{width:100%; height:2px; top:50%; transform:translateY(-50%);}
+  .corner::after{height:100%; width:2px; left:50%; transform:translateX(-50%);}
+  .tl{top:16px; left:16px;} .tr{top:16px; right:16px;} .bl{bottom:16px; left:16px;} .br{bottom:16px; right:16px;}
+
+  header{
+    display:flex; justify-content:space-between; align-items:flex-end;
+    max-width:1180px; margin:0 auto 24px; padding-bottom:16px;
+    border-bottom:1px solid var(--grid-line);
+    flex-wrap:wrap; gap:12px;
+  }
+  .title-block .eyebrow{
+    font-family:'IBM Plex Mono', monospace; font-size:12px; letter-spacing:.12em;
+    color:var(--accent-cyan); text-transform:uppercase;
+  }
+  h1{
+    font-family:'Space Grotesk', sans-serif; font-size:26px; margin:4px 0 2px; font-weight:700;
+  }
+  .subtitle{color:var(--text-muted); font-size:14px;}
+  .controls{display:flex; gap:8px; align-items:center; flex-wrap:wrap;}
+  button{
+    font-family:'IBM Plex Sans Thai', sans-serif; font-size:13px; font-weight:500;
+    background:var(--bg-panel-2); color:var(--text-primary); border:1px solid var(--grid-line);
+    padding:9px 14px; border-radius:6px; cursor:pointer; transition:.15s;
+  }
+  button:hover{border-color:var(--accent-cyan); color:var(--accent-cyan);}
+  button:focus-visible{outline:2px solid var(--accent-cyan); outline-offset:2px;}
+  .status-dot{
+    display:inline-flex; align-items:center; gap:6px; font-family:'IBM Plex Mono',monospace;
+    font-size:11px; color:var(--text-muted);
+  }
+  .status-dot span.dot{width:7px; height:7px; border-radius:50%; background:var(--text-muted);}
+  .status-dot.ok span.dot{background:var(--accent-green);}
+  .status-dot.err span.dot{background:var(--accent-red);}
+
+  main{max-width:1180px; margin:0 auto;}
+  .grid{display:grid; grid-template-columns:1.3fr 1fr; gap:20px;}
+  @media (max-width:860px){ .grid{grid-template-columns:1fr;} }
+
+  .panel{
+    background:var(--bg-panel); border:1px solid var(--grid-line); border-radius:10px;
+    padding:22px; margin-bottom:20px; position:relative;
+  }
+  .panel-label{
+    font-family:'IBM Plex Mono', monospace; font-size:11px; letter-spacing:.1em;
+    color:var(--text-muted); text-transform:uppercase; margin-bottom:14px; display:block;
+  }
+  .empty-state{ text-align:center; padding:60px 20px; color:var(--text-muted); }
+  .empty-state h2{font-family:'Space Grotesk',sans-serif; color:var(--text-primary); font-size:20px; margin-bottom:8px;}
+  .empty-state p{font-size:14px; line-height:1.6; max-width:440px; margin:0 auto 20px;}
+
+  /* overview cards */
+  .overview-row{display:flex; gap:12px; overflow-x:auto; padding-bottom:4px;}
+  .contract-card{
+    flex:0 0 168px; background:var(--bg-panel-2); border:1px solid var(--grid-line); border-radius:8px;
+    padding:14px; cursor:pointer; transition:.15s;
+  }
+  .contract-card:hover{border-color:var(--accent-cyan);}
+  .contract-card.active{border-color:var(--accent-cyan); box-shadow:0 0 0 1px var(--accent-cyan);}
+  .contract-card .c-name{font-family:'Space Grotesk',sans-serif; font-size:14px; font-weight:600; margin-bottom:8px;}
+  .contract-card .c-pcts{display:flex; justify-content:space-between; font-family:'IBM Plex Mono',monospace; font-size:12px; margin-bottom:6px;}
+  .contract-card .c-track{height:6px; background:var(--bg); border-radius:4px; overflow:hidden; border:1px solid var(--grid-line);}
+  .contract-card .c-fill{height:100%;}
+  .contract-card .c-var{font-family:'IBM Plex Mono',monospace; font-size:11px; margin-top:6px;}
+
+  /* progress */
+  .progress-row{display:flex; gap:18px; margin-bottom:18px;}
+  .progress-stat{flex:1; text-align:center; padding:14px 8px; background:var(--bg-panel-2); border-radius:8px;}
+  .progress-stat .num{font-family:'IBM Plex Mono', monospace; font-size:26px; font-weight:600;}
+  .progress-stat .lbl{font-size:12px; color:var(--text-muted); margin-top:4px;}
+  .bar-track{height:12px; background:var(--bg); border-radius:6px; overflow:hidden; position:relative; border:1px solid var(--grid-line);}
+  .bar-fill{height:100%; border-radius:6px; transition:width .4s;}
+  .bar-row{margin-bottom:12px;}
+  .bar-row .bar-head{display:flex; justify-content:space-between; font-size:12px; color:var(--text-muted); margin-bottom:5px;}
+
+  /* budget */
+  .budget-line{display:flex; justify-content:space-between; padding:9px 0; border-bottom:1px dashed var(--grid-line); font-size:14px;}
+  .budget-line:last-child{border-bottom:none;}
+  .budget-line .v{font-family:'IBM Plex Mono', monospace; font-weight:600;}
+
+  /* insurance */
+  .insurance-badge{
+    display:inline-block; padding:3px 10px; border-radius:20px; font-size:12px; font-family:'IBM Plex Mono',monospace; margin-top:8px;
+  }
+  .insurance-badge.ok{background:rgba(76,215,135,.15); color:var(--accent-green);}
+  .insurance-badge.warn{background:rgba(242,169,59,.15); color:var(--accent-amber);}
+  .insurance-badge.danger{background:rgba(232,93,93,.15); color:var(--accent-red);}
+
+  /* milestones */
+  .milestone{ display:flex; align-items:center; gap:12px; padding:11px 0; border-bottom:1px solid var(--grid-line); }
+  .milestone:last-child{border-bottom:none;}
+  .milestone .flag{width:8px; height:8px; border-radius:50%; flex-shrink:0;}
+  .milestone .m-name{flex:1; font-size:14px;}
+  .milestone .m-date{font-family:'IBM Plex Mono',monospace; font-size:12px; color:var(--text-muted);}
+
+  footer{max-width:1180px; margin:20px auto 0; color:var(--text-muted); font-size:12px; text-align:center;}
+</style>
+</head>
+<body>
+<div class="corner tl"></div><div class="corner tr"></div><div class="corner bl"></div><div class="corner br"></div>
+
+<header>
+  <div class="title-block">
+    <div class="eyebrow">CONSTRUCTION PROGRESS / ALL CONTRACTS</div>
+    <h1 id="projectTitle">Dashboard ความคืบหน้าโครงการ</h1>
+    <div class="subtitle" id="projectSubtitle">ยังไม่ได้เชื่อมโฟลเดอร์ข้อมูล</div>
+  </div>
+  <div class="controls">
+    <span class="status-dot" id="statusDot"><span class="dot"></span><span id="statusText">กำลังเชื่อมต่อ...</span></span>
+    <button id="refreshBtn">รีเฟรชข้อมูล</button>
+  </div>
+</header>
+
+<main>
+  <div id="emptyState" class="panel empty-state">
+    <h2>ยังไม่มีข้อมูลแสดงผล</h2>
+    <p>ระบบกำลังโหลดข้อมูลจากฐานข้อมูลกลาง (Google Sheets) หากข้อความนี้ค้างอยู่ แปลว่ายังไม่มีข้อมูลสัญญาใดถูกบันทึกไว้เลย หรือเชื่อมต่อ API ไม่สำเร็จ ลองกด "รีเฟรชข้อมูล"</p>
+  </div>
+
+  <div id="overviewPanel" class="panel" style="display:none;">
+    <span class="panel-label">ภาพรวมทุกสัญญา (คลิกเพื่อดูรายละเอียด)</span>
+    <div class="overview-row" id="overviewRow"></div>
+  </div>
+
+  <div id="dashboardContent" style="display:none;">
+    <div class="grid">
+      <div>
+        <div class="panel">
+          <span class="panel-label">ความคืบหน้างาน</span>
+          <div class="progress-row">
+            <div class="progress-stat"><div class="num" id="planPct" style="color:var(--accent-cyan);">-</div><div class="lbl">Plan (%)</div></div>
+            <div class="progress-stat"><div class="num" id="actualPct" style="color:var(--accent-green);">-</div><div class="lbl">Actual (%)</div></div>
+            <div class="progress-stat"><div class="num" id="variancePct">-</div><div class="lbl">Variance</div></div>
+            <div class="progress-stat"><div class="num" id="ipsVal" style="color:var(--accent-amber);">-</div><div class="lbl">IPS</div></div>
+          </div>
+          <div class="bar-row">
+            <div class="bar-head"><span>แผน (Plan)</span><span id="planPctLbl">-</span></div>
+            <div class="bar-track"><div class="bar-fill" id="planBar" style="width:0%; background:var(--accent-cyan);"></div></div>
+          </div>
+          <div class="bar-row">
+            <div class="bar-head"><span>ผลจริง (Actual)</span><span id="actualPctLbl">-</span></div>
+            <div class="bar-track"><div class="bar-fill" id="actualBar" style="width:0%; background:var(--accent-green);"></div></div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <span class="panel-label">Milestone / กำหนดการที่กำลังจะถึง</span>
+          <div id="milestoneList"></div>
+        </div>
+      </div>
+
+      <div>
+        <div class="panel">
+          <span class="panel-label">วงเงินโครงการ / การเบิกจ่าย</span>
+          <div class="budget-line"><span>วงเงินโครงการ (บาท)</span><span class="v" id="contractValue">-</span></div>
+          <div class="budget-line"><span>เบิกจ่ายแล้ว (บาท)</span><span class="v" id="disbursed">-</span></div>
+          <div class="budget-line"><span>Cost Center Value (บาท)</span><span class="v" id="costCenterValue">-</span></div>
+          <div class="budget-line"><span>เลขที่งวดงานที่เบิกจ่ายล่าสุด</span><span class="v" id="latestPeriodNo">-</span></div>
+          <div class="budget-line"><span>งวดงานล่าสุดที่เบิกจ่าย (บาท)</span><span class="v" id="latestPeriod">-</span></div>
+          <div class="budget-line"><span>วันที่เบิกจ่ายล่าสุด</span><span class="v" id="latestDate">-</span></div>
+          <div class="bar-row" style="margin-top:14px;">
+            <div class="bar-head"><span>เบิกจ่ายแล้ว / Cost Center Value</span><span id="disbPctLbl">-</span></div>
+            <div class="bar-track"><div class="bar-fill" id="disbBar" style="width:0%; background:var(--accent-amber);"></div></div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <span class="panel-label">กรมธรรม์ประกันภัย</span>
+          <div id="insuranceList"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<footer id="lastUpdated"></footer>
+
+<script>
+// ==== ใส่ URL ของ Apps Script Web App ที่ Deploy แล้วตรงนี้ ====
+const API_URL = 'https://script.google.com/macros/s/AKfycbwxQstih82u4rcNsjb4v8rvW0eEJXZB15UlWbYWQ9w8HBn3-fipdhVJLOd4P0JCSMPK/exec';
+
+let contracts = [];
+let selectedIndex = 0;
+let autoRefreshTimer = null;
+
+const statusDot = document.getElementById('statusDot');
+const statusText = document.getElementById('statusText');
+const refreshBtn = document.getElementById('refreshBtn');
+const emptyState = document.getElementById('emptyState');
+const overviewPanel = document.getElementById('overviewPanel');
+const overviewRow = document.getElementById('overviewRow');
+const dashboardContent = document.getElementById('dashboardContent');
+
+function setStatus(ok, text){
+  statusDot.className = 'status-dot ' + (ok ? 'ok' : 'err');
+  statusText.textContent = text;
+}
+function fmtNumber(n){
+  if (n === undefined || n === null || n === '') return '-';
+  return Number(n).toLocaleString('th-TH');
+}
+function fmtDate(d){
+  if(!d) return '-';
+  const dt = new Date(d);
+  if(isNaN(dt)) return d;
+  return dt.toLocaleDateString('th-TH', {year:'numeric', month:'short', day:'numeric'});
+}
+function daysUntil(d){
+  if(!d) return null;
+  const dt = new Date(d);
+  if(isNaN(dt)) return null;
+  const now = new Date();
+  now.setHours(0,0,0,0);
+  dt.setHours(0,0,0,0);
+  return Math.round((dt - now) / 86400000);
+}
+function contractSortKey(name){
+  const m = /(\d+)/.exec(name || '');
+  return m ? parseInt(m[1], 10) : 999;
+}
+
+async function loadAllContracts(){
+  const res = await fetch(API_URL + '?action=list');
+  if(!res.ok) throw new Error('เรียก API ไม่สำเร็จ (HTTP ' + res.status + ')');
+  const found = await res.json();
+  found.sort((a,b) => contractSortKey((a.meta||{}).contractName) - contractSortKey((b.meta||{}).contractName));
+  contracts = found;
+}
+
+function renderOverview(){
+  overviewRow.innerHTML = '';
+  contracts.forEach((data, i) => {
+    const meta = data.meta || {};
+    const p = data.progress || {};
+    const plan = Number(p.plan) || 0;
+    const actual = Number(p.actual) || 0;
+    const variance = actual - plan;
+    const card = document.createElement('div');
+    card.className = 'contract-card' + (i === selectedIndex ? ' active' : '');
+    card.innerHTML = `
+      <div class="c-name">${meta.contractName || '(ไม่มีชื่อสัญญา)'}</div>
+      <div class="c-pcts"><span style="color:var(--accent-cyan)">P ${plan.toFixed(2)}%</span><span style="color:var(--accent-green)">A ${actual.toFixed(2)}%</span></div>
+      <div class="c-track"><div class="c-fill" style="width:${Math.min(actual,100)}%; background:var(--accent-green);"></div></div>
+      <div class="c-var" style="color:${variance>=0 ? 'var(--accent-green)' : 'var(--accent-red)'}">${variance>=0?'+':''}${variance.toFixed(2)}%</div>
+    `;
+    card.addEventListener('click', () => { selectedIndex = i; renderOverview(); renderDetail(contracts[i]); });
+    overviewRow.appendChild(card);
+  });
+}
+
+function renderDetail(data){
+  if(!data) return;
+  const meta = data.meta || {};
+  document.getElementById('projectTitle').textContent = meta.projectName || 'Dashboard ความคืบหน้าโครงการ';
+  document.getElementById('projectSubtitle').textContent = meta.contractName || '';
+
+  const p = data.progress || {};
+  const plan = Number(p.plan) || 0;
+  const actual = Number(p.actual) || 0;
+  const variance = actual - plan;
+  document.getElementById('planPct').textContent = plan.toFixed(2) + '%';
+  document.getElementById('actualPct').textContent = actual.toFixed(2) + '%';
+  const varEl = document.getElementById('variancePct');
+  varEl.textContent = (variance >= 0 ? '+' : '') + variance.toFixed(2) + '%';
+  varEl.style.color = variance >= 0 ? 'var(--accent-green)' : 'var(--accent-red)';
+  document.getElementById('ipsVal').textContent = (p.ips !== undefined && p.ips !== '') ? Number(p.ips).toFixed(2) : '-';
+  document.getElementById('planPctLbl').textContent = plan.toFixed(2) + '%';
+  document.getElementById('actualPctLbl').textContent = actual.toFixed(2) + '%';
+  document.getElementById('planBar').style.width = Math.min(plan,100) + '%';
+  document.getElementById('actualBar').style.width = Math.min(actual,100) + '%';
+
+  const b = data.budget || {};
+  document.getElementById('contractValue').textContent = fmtNumber(b.contractValue);
+  document.getElementById('disbursed').textContent = fmtNumber(b.disbursed);
+  document.getElementById('costCenterValue').textContent = fmtNumber(b.costCenterValue);
+  document.getElementById('latestPeriodNo').textContent = fmtNumber(b.latestPeriodNo);
+  document.getElementById('latestPeriod').textContent = fmtNumber(b.latestPeriod);
+  document.getElementById('latestDate').textContent = fmtDate(b.latestDate);
+  const disbPct = b.costCenterValue ? Math.min((Number(b.disbursed)||0) / Number(b.costCenterValue) * 100, 100) : 0;
+  document.getElementById('disbBar').style.width = disbPct + '%';
+  document.getElementById('disbPctLbl').textContent = disbPct.toFixed(2) + '%';
+
+  const ins = data.insurance || {};
+  const insuranceList = document.getElementById('insuranceList');
+  insuranceList.innerHTML = '';
+  const INSURANCE_TYPES = ['CAR/TPL', 'CPE', 'PII', 'WCI'];
+  INSURANCE_TYPES.forEach(type => {
+    const rec = ins[type] || {};
+    const dLeft = daysUntil(rec.expiryDate);
+    let badge = '';
+    if(dLeft === null){ badge = ''; }
+    else if(dLeft < 0){ badge = '<span class="insurance-badge danger">หมดอายุแล้ว</span>'; }
+    else if(dLeft <= 30){ badge = `<span class="insurance-badge warn">อีก ${dLeft} วัน</span>`; }
+    else { badge = `<span class="insurance-badge ok">อีก ${dLeft} วัน</span>`; }
+    const block = document.createElement('div');
+    block.style.marginBottom = '14px';
+    block.style.paddingBottom = '12px';
+    block.style.borderBottom = '1px dashed var(--grid-line)';
+    block.innerHTML = `
+      <div class="budget-line" style="border-bottom:none; padding-bottom:2px;"><span><strong>${type}</strong></span><span></span></div>
+      <div class="budget-line"><span>เลขที่กรมธรรม์</span><span class="v">${rec.policyNumber || '-'}</span></div>
+      <div class="budget-line" style="border-bottom:none;"><span>วันหมดอายุ</span><span class="v">${fmtDate(rec.expiryDate)} ${badge}</span></div>
+    `;
+    insuranceList.appendChild(block);
+  });
+
+  const milestoneList = document.getElementById('milestoneList');
+  milestoneList.innerHTML = '';
+  const milestones = (data.milestones || [])
+    .filter(m => m.name && m.date)
+    .sort((a,b) => new Date(a.date) - new Date(b.date));
+  if(milestones.length === 0){
+    milestoneList.innerHTML = '<div style="color:var(--text-muted); font-size:13px;">ยังไม่มีข้อมูล Milestone</div>';
+  } else {
+    milestones.slice(0,8).forEach(m => {
+      const dl = daysUntil(m.date);
+      let color = 'var(--accent-green)';
+      if(dl !== null && dl < 0) color = 'var(--text-muted)';
+      else if(dl !== null && dl <= 7) color = 'var(--accent-red)';
+      else if(dl !== null && dl <= 30) color = 'var(--accent-amber)';
+      const row = document.createElement('div');
+      row.className = 'milestone';
+      row.innerHTML = `<span class="flag" style="background:${color};"></span><span class="m-name">${m.name}</span><span class="m-date">${fmtDate(m.date)}</span>`;
+      milestoneList.appendChild(row);
+    });
+  }
+
+  document.getElementById('lastUpdated').textContent = 'อัปเดตข้อมูลล่าสุด (ในไฟล์): ' + (meta.updatedAt ? fmtDate(meta.updatedAt) : '-') + ' | โหลดหน้านี้เมื่อ: ' + new Date().toLocaleTimeString('th-TH');
+}
+
+async function refreshAll(silent){
+  try{
+    await loadAllContracts();
+    if(contracts.length === 0){
+      if(!silent) alert('ยังไม่พบไฟล์ข้อมูลสัญญาในโฟลเดอร์นี้');
+      return;
+    }
+    emptyState.style.display = 'none';
+    overviewPanel.style.display = 'block';
+    dashboardContent.style.display = 'block';
+    if(selectedIndex >= contracts.length) selectedIndex = 0;
+    renderOverview();
+    renderDetail(contracts[selectedIndex]);
+    setStatus(true, 'เชื่อมต่อฐานข้อมูลกลางแล้ว (' + contracts.length + ' สัญญา)');
+  }catch(e){
+    if(!silent) alert('อ่านข้อมูลไม่สำเร็จ: ' + e.message);
+    setStatus(false, 'อ่านข้อมูลไม่สำเร็จ');
+  }
+}
+
+function startAutoRefresh(){
+  if(autoRefreshTimer) clearInterval(autoRefreshTimer);
+  autoRefreshTimer = setInterval(() => refreshAll(true), 15000);
+}
+
+refreshBtn.addEventListener('click', () => refreshAll(false));
+
+refreshAll(false);
+startAutoRefresh();
+</script>
+</body>
+</html>
